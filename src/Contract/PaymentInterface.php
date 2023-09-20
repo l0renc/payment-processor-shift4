@@ -2,7 +2,9 @@
 
 namespace App\Contract;
 
+use App\Service\PaymentResponse;
+
 interface PaymentInterface {
-    public function paymentProcess(array $paymentData): array;
-    public function refundProcess(array $refundData): array;
+    public function processPayment($order): PaymentResponse;
+    public function processRefund($order): PaymentResponse;
 }

@@ -4,17 +4,12 @@
 namespace App\Service;
 
 use App\Contract\PaymentInterface;
+use App\PaymentBundle\Entity\Order;
 
 class PaymentManager {
 
-    private PaymentInterface $paymentService;
-
-    public function __construct(PaymentInterface $paymentService) {
-        $this->paymentService = $paymentService;
-    }
-
-
-    public function initGateway(MerchantAccount $merchantAccount) {
+    public function initGateway($merchantAccount)
+    {
 
         $gatewaySettings = $merchantAccount->getGatewaySettings();
 
@@ -30,11 +25,48 @@ class PaymentManager {
     }
 
 
-    public function processPayment(array $paymentData): array {
-        return $this->paymentService->paymentProcess($paymentData);
+    /**
+     * @param string $orderId
+     * @return PaymentResponse
+     */
+    public function processPayment(string $orderId): PaymentResponse
+    {
+        $orderRepository = $this->getDoctrine()->getRepository(Order::class);
+        $order = $orderRepository->findOneBy(['uniqueIdentifier' => $orderId]);
+        $merchantAccount = $order->getMerchantAccount();
+
+        $gateway = $this->initGateway($merchantAccount);
+        /** @var PaymentResponse $response */
+        $response = $gateway->paymentProcess($order);
+
+        return $response;
     }
 
-    public function processRefund(array $refundData): array {
-        return $this->paymentService->refundProcess($refundData);
+    /**
+     * @param string $orderId
+     * @return PaymentResponse
+     */
+    public function processRefund(string $orderId): PaymentResponse
+    {
+        $orderRepository = $this->getDoctrine()->getRepository(Order::class);
+        $order = $orderRepository->findOneBy(['uniqueIdentifier' => $orderId]);
+        $merchantAccount = $order->getMerchantAccount();
+
+        $gateway = $this->initGateway($merchantAccount);
+        /** @var PaymentResponse $response */
+        $response = $gateway->processRefund($order);
+
+        return $response;
+    }
+
+    public static function buildPaymentResponse($id, $status, $data, $gateway)
+    {
+        $paymentResponse = new PaymentResponse();
+        $paymentResponse->setId($id);
+        $paymentResponse->setStatus($status);
+        $paymentResponse->setData($data);
+        $paymentResponse->setPaymentGateway($gateway);
+
+        return $paymentResponse;
     }
 }
