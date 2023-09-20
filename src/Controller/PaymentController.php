@@ -46,9 +46,16 @@ class PaymentController extends AbstractController {
             /** @var PaymentResponse $response */
             $response = $paymentManager->processRefund($orderId);
         } catch (Exception $exception){
-            return new Response($exception->getMessage(), Response::HTTP_BAD_REQUEST);
+            return $this->responseBuilder->createErrorAPIResponse(
+                Response::HTTP_BAD_REQUEST,
+                $exception->getMessage(),
+                $response->getData() ?? null
+            );
         }
 
-        return new Response($response->getData(), $response->getStatus());
+        return $this->responseBuilder->createDataAPIResponse(
+            $response->getData(),
+            $response->getStatus()
+        );
     }
 }

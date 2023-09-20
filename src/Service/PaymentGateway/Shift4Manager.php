@@ -9,6 +9,7 @@ use Shift4\Request\ChargeRequest;
 use Shift4\Request\RefundRequest;
 use Shift4\Response\Charge;
 use Shift4\Response\Refund;
+use Symfony\Component\HttpFoundation\Response;
 
 class Shift4Manager implements PaymentInterface
 {
@@ -89,4 +90,33 @@ class Shift4Manager implements PaymentInterface
         return $paymentResponse;
 
     }
+
+
+    /**
+     * @param $MIDReference
+     * @param $content
+     * @param $statusCode
+     * @return Response
+     */
+    public function webhookResponse($midReference, $content, $statusCode) : Response
+    {
+
+        //EMerchantPay Example
+
+        $xmlResponse = new \DOMDocument('1.0','UTF-8');
+        $xmlResponse->formatOutput = true;
+
+        $notificationNode = $xmlResponse->createElement('notification_echo');
+
+        $uniqueIdNode = $xmlResponse->createElement('unique_id', $midReference);
+
+        $notificationNode->appendChild($uniqueIdNode);
+        $xmlResponse->appendChild($notificationNode);
+
+        return new Response($xmlResponse->saveXML(), $statusCode, [
+            'Content-Type' => 'text/xml',
+        ]);
+    }
+
+
 }
